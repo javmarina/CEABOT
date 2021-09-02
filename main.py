@@ -26,19 +26,19 @@ def main():
     bluerov_http = RobotHttpInterface(RobotModel.BLUE_ROV)
 
     ## Girona cameras
-    c1 = CameraClient(root, "300x300+200+10", "Camera_1", girona1_http)
-    c2 = CameraClient(root, "300x300+200+10", "Camera_2", girona2_http)
+    c1 = CameraClient(root, "320x262+10+100", "G500_1 Camera (Yellow)", girona1_http)
+    c2 = CameraClient(root, "320x262+350+100", "G500_2 Camera (Red)", girona2_http)
 
     ## Girona controllers
-    r1 = ControlWindow(root, "200x400+300+10", "Yellow_robot", girona1_http)
-    r2 = ControlWindow(root, "200x400+300+10", "Red_robot", girona2_http)
+    r1 = ControlWindow(root, "320x260+10+420", "G500_1 Control (Yellow)", girona1_http)
+    r2 = ControlWindow(root, "320x260+350+420", "G500_2 Control (Red)", girona2_http)
 
     ## BlueRov camera
     pipeline = ImagePipeline("localhost", bluerov_http, 10)
-    cB = VisionLeaderFollowerMissionClient(root, "300x300+200+10", "Camera_BlueRov", pipeline)
+    cB = VisionLeaderFollowerMissionClient(root, "375x262+690+100", "BlueROV Camera", pipeline)
 
     ## BlueRov Control
-    blueRov = ControlWindow(root, "200x400+300+10", "BlueRov", bluerov_http)
+    blueRov = ControlWindow(root, "320x260+690+420", "BlueROV Control", bluerov_http)
 
     c1.start()
     c2.start()
