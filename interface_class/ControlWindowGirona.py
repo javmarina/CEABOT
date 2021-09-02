@@ -1,50 +1,22 @@
 import tkinter as tk
 import requests
 from threading import Lock
+from utils import RobotModel, RobotHttpInterface
 
 
 class ControlWindow():
 
-    # Commands
-    comm = {"fw": '/forward',
-            "bw": '/backward',
-            "stop": '/stop',
-            "l": '/left',
-            "r": '/right',
-            "tl": '/turnright',  # interchanged commands
-            "tr": '/turnleft',
-            "u": '/up',
-            "d": '/down',
-            "vel": '/setVelocity?',
-            "pos": '/getPosition',
-            "open": '/OPEN',
-            "close": '/CLOSE',
-            "stopg": '/STOP'
-            }
-
-    lock = Lock()
-
-
-    def __init__(self, root, geometryString, name, url):
+    def __init__(self, root, geometryString, name, robot : RobotHttpInterface):
 
         self.root = root
-        self.url = url
         self.name = name
-
-        self.port = self.url.split(":")[-1]
-        self.gripper_port = ""
-        if self.port == "8000":
-            self.gripper_port = "8002"
-        else:
-            self.gripper_port = "8012"
-
-        self.url_gripper = self.url[:-4] + self.gripper_port
+        self.robot = robot
 
         self.robotWindow = tk.Toplevel(root)
         self.robotWindow.geometry(geometryString)
         self.robotWindow.title(self.name)
 
-        self.label = tk.Label(self.robotWindow, text=url)
+        self.label = tk.Label(self.robotWindow, text=robot._movement_url)
         self.label.grid(row=0, sticky="n", columnspan=3)
 
         self.w = 7
@@ -130,85 +102,49 @@ class ControlWindow():
         ### ----------------- ###
 
     def forward(self):
-        self.request_get(self.url, self.comm["fw"])
+        self.robot.forward()
         # r = requests.get(self.url + self.comm["fw"])
 
     def backward(self):
-        self.request_get(self.url, self.comm["bw"])
-        # requests.get(self.url + self.comm["bw"])
+        self.robot.backward()
 
     def left(self):
-        self.request_get(self.url, self.comm["l"])
-        # requests.get(self.url + self.comm["l"])
+        self.robot.move_left()
 
     def right(self):
-        self.request_get(self.url, self.comm["r"])
-        # requests.get(self.url + self.comm["r"])
+        self.robot.move_right()
 
     def up(self):
-        self.request_get(self.url, self.comm["u"])
-        # requests.get(self.url + self.comm["u"])
+        self.robot.move_up()
 
     def down(self):
-        self.request_get(self.url, self.comm["d"])
-        # requests.get(self.url + self.comm["d"])
+        self.robot.move_down()
 
     def turnleft(self):
-        self.request_get(self.url, self.comm["tl"])
-        # requests.get(self.url + self.comm["tl"])
+        self.robot.turn_left()
 
     def turnright(self):
-        self.request_get(self.url, self.comm["tr"])
-        # requests.get(self.url + self.comm["tr"])
+        self.robot.turn_right()
 
     def stop(self):
-        self.request_get(self.url, self.comm["stop"])
-        # requests.get(self.url + self.comm["stop"])
+        self.robot.stop()
 
     def setVelocityPctg(self, val):
-        vel_values = "X=0&Y=0&Z=0,1&AZ=0&PERCENTAGE=" + val
-        self.request_get(self.url, self.comm["vel"], vel_values)
-        # requests.get(self.url + self.comm["vel"] + vel_values)
-        # http://localhost:8000/setVelocity?X=0,1&Y=0&Z=0&AZ=0&PERCENTAGE=100
+        self.robot.set_velocity(0,0,0.1,val)
 
     def setVelocity(self, x_vel, y_vel, z_vel, za_vel, vel_pctg):
-        x_vel = -x_vel
-        y_vel = -y_vel
-        x_vel  = str(x_vel).replace(".", ",")
-        y_vel  = str(y_vel).replace(".", ",")
-        z_vel  = str(z_vel).replace(".", ",")
-        za_vel = str(za_vel).replace(".", ",")
-        vel_values = "X="+y_vel+"&Y="+x_vel+"&Z="+z_vel+"&AZ="+za_vel+"&PERCENTAGE="+str(vel_pctg)
-        self.request_get(self.url, self.comm["vel"], vel_values)
-        # requests.get(self.url + self.comm["vel"] + vel_values)
+        self.robot.set_velocity(x_vel,y_vel,z_vel,za_vel,vel_pctg)
 
     def getPosition(self):
-        req = self.request_get(self.url, self.comm["pos"])
-        # req = requests.get(self.url + self.comm["pos"])
-        pos_json = req.json()
-        self.labelPosX['text'] = "x = " + str(round(pos_json["x"], 6))
-        self.labelPosY['text'] = "y = " + str(round(pos_json["y"], 6))
-        self.labelPosZ['text'] = "z = " + str(round(pos_json["z"], 6))
-
-        self.pos = (pos_json["x"], pos_json["y"], pos_json["z"])
-        return self.pos
+        self.pos = self.robot.get_position()
+        return (self.pos[0], self.pos[1], self.pos[2])
 
     def openG(self):
-        self.request_get(self.url_gripper, self.comm["open"])
-        # req = requests.get(self.url_gripper + self.comm["open"])
+        self.robot.open_gripper()
 
     def closeG(self):
-        self.request_get(self.url_gripper, self.comm["close"])
-        # req = requests.get(self.url_gripper + self.comm["close"])
+        self.robot.close_gripper()
 
     def stopG(self):
-        self.request_get(self.url_gripper, self.comm["stopg"])
-        # req = requests.get(self.url_gripper + self.comm["stopg"])
-
-    # Implement thread Locking to avoid errors
-    def request_get(self, url, comm, queue=""):
-        ControlWindow.lock.acquire()
-        r = requests.get(url + comm + queue)
-        ControlWindow.lock.release()
-        return r
+        self.robot.stop_gripper()
 

@@ -5,23 +5,22 @@ from threading import Thread
 import tkinter as tk
 import PIL.Image, PIL.ImageTk
 import time
-
+from utils import RobotHttpInterface
 
 class CameraClient(Thread):
 
-    def __init__(self, root, geometryString, name, url):
+    def __init__(self, root, geometryString, name, robot:RobotHttpInterface):
         Thread.__init__(self)
         self.root = root
         self.name = name
-        self.url = url
+        self.robot = robot
         self.cameraWindow = tk.Toplevel(root)
-        self.label = tk.Label(self.cameraWindow, text=url)
+        self.label = tk.Label(self.cameraWindow, text=self.robot._camera_url)
         self.label.grid(row=0, column=0, columnspan=3)
 
         self.cameraWindow.title(name)
         self.cameraWindow.geometry(geometryString)
 
-        self.urlOperation = url + 'cameracolor.jpg'
         self.imageScalePercentage = 50
         self.exit = False
         self.gap = 0.02
@@ -32,18 +31,17 @@ class CameraClient(Thread):
         self.canvas.grid(row=1, rowspan=6, column=0, columnspan=1, sticky="nswe")
 
     def getImage(self):
-        img = self.url_to_image(self.url)
+        img = self.url_to_image()
         w = int(img.shape[1] * (self.imageScalePercentage / 100))
         h = int(img.shape[0] * (self.imageScalePercentage / 100))
         img = cv2.resize(img, dsize=(w, h), interpolation=cv2.INTER_AREA)
         return img
 
-    def url_to_image(self, url, readFlag=cv2.IMREAD_COLOR):
-        with urlopen(url) as resp:
-            resp = urlopen(url)
-            image = np.asarray(bytearray(resp.read()), dtype="uint8")
-            image = cv2.imdecode(image, readFlag)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    def url_to_image(self, readFlag=cv2.IMREAD_COLOR):
+        resp = self.robot.get_image()
+        image = np.asarray(bytearray(resp), dtype="uint8")
+        image = cv2.imdecode(image, readFlag)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
 
     def run(self):
