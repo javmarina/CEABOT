@@ -2,7 +2,7 @@ import tkinter as tk
 
 from ImagePipeline import ImagePipeline
 from interface_class.CameraClient import CameraClient
-from interface_class.ControlWindowGirona import ControlWindow
+from interface_class.ControlWindowGirona import ControlWindow, ControlWindowGirona
 from interface_class.ControlWindowLF import VisionLeaderFollowerMissionClient
 from utils import RobotModel, RobotHttpInterface
 
@@ -30,12 +30,12 @@ def main():
     c2 = CameraClient(root, "320x262+350+100", "G500_2 Camera (Red)", girona2_http)
 
     ## Girona controllers
-    r1 = ControlWindow(root, "320x260+10+420", "G500_1 Control (Yellow)", girona1_http)
-    r2 = ControlWindow(root, "320x260+350+420", "G500_2 Control (Red)", girona2_http)
+    r1 = ControlWindowGirona(root, "320x260+10+420", "G500_1 Control (Yellow)", girona1_http)
+    r2 = ControlWindowGirona(root, "320x260+350+420", "G500_2 Control (Red)", girona2_http)
 
     ## BlueRov camera
     pipeline = ImagePipeline("localhost", bluerov_http, 10)
-    cB = VisionLeaderFollowerMissionClient(root, "375x262+690+100", "BlueROV Camera", pipeline)
+    cB = VisionLeaderFollowerMissionClient(root, "440x262+690+100", "BlueROV Camera", pipeline)
 
     ## BlueRov Control
     blueRov = ControlWindow(root, "320x260+690+420", "BlueROV Control", bluerov_http)

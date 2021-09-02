@@ -13,17 +13,20 @@ class VisionLeaderFollowerMissionClient(CameraClient):
         self.root = root
         self.pipeline = pipeline
 
-        self.buttonShowMarkers = tk.Button(self.cameraWindow, text="Markers", command=self.applyDetectMarker)
-        self.buttonShowMarkers.grid(row=6, rowspan=1, column=1, columnspan=2, sticky="nswe")
+        self.missionLabel = tk.Label(self.cameraWindow, text="LEADER-FOLLOWER\nCONTROL STATE")
+        self.missionLabel.grid(row=2, rowspan=1, column=1, columnspan=2)
 
-        self.detectMarkers = False
+        self.option = tk.IntVar()
+        self.controlOff = tk.Radiobutton(self.cameraWindow, text="OFF", variable=self.option,
+                                        value=1, command=self.pipeline[-1].stop_visual_servoing)
+        self.controlOff.grid(row=3, rowspan=1, column=1, columnspan=1, sticky="nswe")
+        self.controlOn = tk.Radiobutton(self.cameraWindow, text="ON", variable=self.option,
+                                        value=2, command=self.pipeline[-1].resume_visual_servoing)
+        self.controlOn.grid(row=3, rowspan=1, column=2, columnspan=1, sticky="nswe")
 
-    def applyDetectMarker(self):
-        self.detectMarkers = not self.detectMarkers
-        if self.detectMarkers:
-            self.pipeline[-1].resume_visual_servoing()
-        else:
-            self.pipeline[-1].stop_visual_servoing()
+
+        # self.buttonShowMarkers = tk.Button(self.cameraWindow, text="Markers", command=self.applyDetectMarker)
+        # self.buttonShowMarkers.grid(row=6, rowspan=1, column=1, columnspan=2, sticky="nswe")
 
     def getImage(self):
         img = self.pipeline.get_last_frame()
