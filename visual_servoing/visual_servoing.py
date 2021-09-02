@@ -110,6 +110,6 @@ class VisualServoing:
             target_feature = self._calc_feature(t, R)
         error = target_feature - self._ideal_feature
 
-        vel = -self._lambda * np.dot(np.linalg.inv(L), error)
+        vel = -self._lambda * np.dot(np.linalg.pinv(L), error)
 
         return vel, error
