@@ -5,11 +5,11 @@ import cv2 as cv
 import numpy as np
 from PIL import Image
 from cv2 import aruco
+from simple_pid import PID
 
-from utils import RobotModel, RobotHttpInterface
+from utils import RobotHttpInterface
 from pipeline.Pipeline import StraightPipeline
 from pipeline.PipelineStage import Producer, PipelineStage, Consumer
-from visual_servoing.visual_servoing import VisualServoing
 
 
 class ImagePipeline(StraightPipeline):
@@ -19,28 +19,12 @@ class ImagePipeline(StraightPipeline):
             address = "127.0.0.1"
         self.http_interface = http_interface
 
-        final_camera_depth = 0.005  # Regulates velocity
-
-        shape = (480, 640)
-        cx = shape[1] / 2
-        cy = shape[0] / 2
-        tag_size = 40
-
-        base = np.array([[[cx - tag_size / 2, cy - tag_size / 2],
-                          [cx + tag_size / 2, cy - tag_size / 2],
-                          [cx + tag_size / 2, cy + tag_size / 2],
-                          [cx - tag_size / 2, cy + tag_size / 2]]])
-
-        # Ver https://www.pyimagesearch.com/2020/12/21/detecting-aruco-markers-with-opencv-and-python/
-        desired_corners = base.flatten()
-        dist_tol = 0.5
-
         super().__init__([
             FiringStage(adq_rate),
             AdqStage(self.http_interface),
             ImageConversionStage(),
             ArucoStage(),
-            VisualServoingStage(self.http_interface, final_camera_depth, desired_corners, dist_tol)
+            PositionControlStage(self.http_interface)
         ])
 
     def get_last_frame(self):
@@ -127,17 +111,22 @@ class ArucoStage(PipelineStage):
         return -1
 
 
-class VisualServoingStage(Consumer):
-    def __init__(self, http_interface: RobotHttpInterface, final_camera_depth, desired_corners, dist_tol):
+class PositionControlStage(Consumer):
+    def __init__(self, http_interface: RobotHttpInterface):
         super().__init__()
         self._http_interface = http_interface
-        self._stopped = False
+        self._stopped = True
 
-        self._vs = VisualServoing(ibvs=True)
-        self._dist_tol = dist_tol
-        Z = final_camera_depth
-        ideal_cam_pose = np.array([0, 0, Z])
-        self._vs.set_target(ideal_cam_pose, None, desired_corners)
+        shape = (480, 640)
+        self.pid_x = PID(Kp=0.001, Ki=0.0, Kd=0.0, setpoint=1000)
+        self.pid_y = PID(Kp=0.005, Ki=0.0, Kd=0.0, setpoint=shape[1] / 2)
+        self.pid_z = PID(Kp=0.01, Ki=0.0, Kd=0.0, setpoint=shape[0] / 2)
+        self.pid_az = PID(Kp=0.025, Ki=0.0, Kd=0.0, setpoint=0)
+
+    @staticmethod
+    def compute_area(x, y):
+        # https://stackoverflow.com/questions/24467972/calculate-area-of-polygon-given-x-y-coordinates
+        return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
     def _consume(self, in_data):
         img, corners, id = in_data
@@ -149,19 +138,29 @@ class VisualServoingStage(Consumer):
                 [293., 247.]]], dtype=float32)
             """
 
-            servo_vel, error = self._vs.get_next_vel(corners=corners)
-            vx, vy, vz, wx, wy, wz = servo_vel
-            if np.linalg.norm(error) < self._dist_tol:
-                self.stop_visual_servoing()
-            else:
-                # Velocidades respecto cámara
-                # X positivo: hacia alante
-                # Y positivo: hacia derecha
-                # Z positivo: hacia abajo
-                self._http_interface.set_velocity(x=vz, y=vx, z=vy, az=-wy)  # TODO: comprobar
-                print(servo_vel)
+            x = corners[:, :, 0].flatten()
+            y = corners[:, :, 1].flatten()
+
+            area = self.compute_area(x, y)
+            cx = np.mean(x)
+            cy = np.mean(y)
+            slope = np.mean([(y[1] - y[0])/(x[1]-x[0]), (y[3] - y[2])/(x[3] - x[2])])
+
+            # Velocidades respecto cámara
+            # X positivo: hacia alante
+            # Y positivo: hacia derecha
+            # Z positivo: hacia abajo
+
+            vx = self.pid_x(area)
+            vy = -self.pid_y(cx)
+            vz = -self.pid_z(cy)
+            az = self.pid_az(slope)
+
+            self._http_interface.set_velocity(vx, vy, vz, az, 100.0)
 
             img = aruco.drawDetectedMarkers(img.copy(), [corners], np.array([[id]]))
+        else:
+            self._http_interface.stop()
         return img
 
     def stop_visual_servoing(self):
