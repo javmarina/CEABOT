@@ -84,7 +84,7 @@ class ArucoStage(PipelineStage):
         if my_marker is None:
             return img, None, None
 
-        return img, corners[marker_pos], marker_pos
+        return img, corners[marker_pos], my_marker
 
     def _get_marker(self, ids):
         """
