@@ -5,7 +5,7 @@ pose based visual servoing (pbvs). Currently only eye in hand (eih) methods are 
 although eye to hand (eth) methods are easily applied by applying the transformation from 
 the camera (eye) to the hand to the velocity twist vector.
 """
-from utility import *
+from visual_servoing.utility import *
 
 
 class VisualServoing:
