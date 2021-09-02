@@ -44,8 +44,8 @@ class CameraClient(Thread):
         return image
 
     def run(self):
-        while (not self.exit):
+        while not self.exit:
             self.image = self.getImage()
-            imageForCanvas = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(self.image))
-            self.canvas.create_image(self.width/2, self.height/2, image=imageForCanvas, anchor=tk.CENTER)
+            imageForCanvas = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.image))
+            self.canvas.create_image(self.width / 2, self.height / 2, image=imageForCanvas, anchor=tk.CENTER)
             time.sleep(self.gap)
