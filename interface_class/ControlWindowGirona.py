@@ -1,13 +1,9 @@
 import tkinter as tk
-import requests
-from threading import Lock
-from utils import RobotModel, RobotHttpInterface
+from utils import RobotHttpInterface
 
 
-class ControlWindow():
-
-    def __init__(self, root, geometryString, name, robot : RobotHttpInterface):
-
+class ControlWindow:
+    def __init__(self, root, geometryString, name, robot: RobotHttpInterface):
         self.root = root
         self.name = name
         self.robot = robot
@@ -29,7 +25,7 @@ class ControlWindow():
         self.robotFw.config(height=self.h, width=self.w)
         self.robotFw.grid(row=1, column=1, columnspan=1, sticky="WE")
 
-        self.robotL  = tk.Button(self.robotWindow, text="\u2B9C", command=self.left)
+        self.robotL = tk.Button(self.robotWindow, text="\u2B9C", command=self.left)
         self.robotL.configure(height=self.h, width=self.w)
         self.robotL.grid(row=2, column=0, columnspan=1, sticky="WE")
 
@@ -78,7 +74,7 @@ class ControlWindow():
         #### Tomar posición actual (x, y, z) ####
         txt = "Get Position\n\n" + self.name.split(" ")[0]
         self.buttonGetPos = tk.Button(self.robotWindow, text=txt, command=self.getPosition)
-        self.buttonGetPos.configure(height=self.h, width=self.w*2)
+        self.buttonGetPos.configure(height=self.h, width=self.w * 2)
         self.buttonGetPos.grid(row=3, column=5, columnspan=2, rowspan=1, sticky="WENS")
 
         self.labelPosX = tk.Label(self.robotWindow, text=self.pos[0])
@@ -130,14 +126,14 @@ class ControlWindow():
         self.robot.stop()
 
     def setVelocityPctg(self, val):
-        self.robot.set_velocity(0,0,0.1,val)
+        self.robot.set_velocity(0, 0, 0.1, val)
 
     def setVelocity(self, x_vel, y_vel, z_vel, za_vel, vel_pctg):
-        self.robot.set_velocity(x_vel,y_vel,z_vel,za_vel,vel_pctg)
+        self.robot.set_velocity(x_vel, y_vel, z_vel, za_vel, vel_pctg)
 
     def getPosition(self):
         self.pos = self.robot.get_position()
-        return (self.pos[0], self.pos[1], self.pos[2])
+        return self.pos[0], self.pos[1], self.pos[2]
 
     def openG(self):
         self.robot.open_gripper()
@@ -147,4 +143,3 @@ class ControlWindow():
 
     def stopG(self):
         self.robot.stop_gripper()
-

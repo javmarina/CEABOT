@@ -8,7 +8,7 @@ the camera (eye) to the hand to the velocity twist vector.
 from utility import *
 
 
-class VisualServoing(object):
+class VisualServoing:
     """
     General visual servoing class to perform either image based visual servoing (ibvs) or 
     pose based visual servoing (pbvs). Currently only eye in hand (eih) methods are supported,

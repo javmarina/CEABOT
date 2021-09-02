@@ -1,15 +1,14 @@
 import numpy as np
 import cv2
-from urllib.request import urlopen
 from threading import Thread
 import tkinter as tk
 import PIL.Image, PIL.ImageTk
 import time
 from utils import RobotHttpInterface
 
-class CameraClient(Thread):
 
-    def __init__(self, root, geometryString, name, robot:RobotHttpInterface):
+class CameraClient(Thread):
+    def __init__(self, root, geometryString, name, robot: RobotHttpInterface):
         Thread.__init__(self)
         self.root = root
         self.name = name
