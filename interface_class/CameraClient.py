@@ -1,15 +1,15 @@
-import numpy as np
-import cv2
-from threading import Thread
 import tkinter as tk
-import PIL.Image, PIL.ImageTk
-import time
+
+import PIL.Image
+import PIL.ImageTk
+import cv2
+import numpy as np
+
 from utils import RobotHttpInterface
 
 
-class CameraClient(Thread):
+class CameraClient:
     def __init__(self, root, geometryString, name, robot: RobotHttpInterface):
-        Thread.__init__(self)
         self.root = root
         self.name = name
         self.robot = robot
@@ -43,9 +43,13 @@ class CameraClient(Thread):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
 
+    def start(self):
+        self.run()
+
     def run(self):
-        while not self.exit:
+        if not self.exit:
             self.image = self.getImage()
-            imageForCanvas = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.image))
-            self.canvas.create_image(self.width / 2, self.height / 2, image=imageForCanvas, anchor=tk.CENTER)
-            time.sleep(self.gap)
+            self.canvas.imageForCanvas = PIL.ImageTk.PhotoImage(image=PIL.Image.fromarray(self.image))
+            self.canvas.create_image(self.width / 2, self.height / 2, image=self.canvas.imageForCanvas, anchor=tk.CENTER)
+            self.canvas.update()
+            self.canvas.after(int(self.gap*1000), self.run)
